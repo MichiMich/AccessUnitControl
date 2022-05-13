@@ -11,6 +11,12 @@ async function main() {
   const accessControl = await AccessControl.deploy();
   await accessControl.deployed();
   console.log("AccessControl deployed at:", accessControl.address);
+
+  const NftMintContract = await hre.ethers.getContractFactory("NftMintContract");
+  nftContract = await NftMintContract.deploy(accessControl.address, 10); //link with accessControl, 10 nfts mintable
+  await nftContract.deployed();
+  console.log("nftMintContract deployed at:", nftContract.address);
+
 }
 
 // We recommend this pattern to be able to use async/await everywhere
