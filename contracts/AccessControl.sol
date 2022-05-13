@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "hardhat/console.sol";
 
 contract AccessControl is Ownable {
     mapping(address => uint256) private s_mapAccessAllowedAddresses; //holds address and allowed nr of allowed elements to be minted by this address
@@ -30,7 +29,6 @@ contract AccessControl is Ownable {
         if (s_mapAccessAllowedAddresses[_addressToBeAdded] == 0) {
             //address not yet added
             s_addedAddresses.push(_addressToBeAdded);
-            console.log(_addressToBeAdded, "added to allowed ones");
         }
         s_mapAccessAllowedAddresses[_addressToBeAdded] = _nrOfAllowedElements; //set nr of allowed elements to be minted by this address
     }
@@ -51,15 +49,10 @@ contract AccessControl is Ownable {
             hadshakeContractImpl handshakeContract = hadshakeContractImpl(
                 s_handshakeContract
             );
-            console.log(
-                "balanceOf",
-                handshakeContract.balanceOf(_adressToBeChecked)
-            );
             if (
                 handshakeContract.balanceOf(_adressToBeChecked) <
                 s_mapAccessAllowedAddresses[_adressToBeChecked]
             ) {
-                console.log(_adressToBeChecked, "allowed");
                 return (true);
             }
         }
@@ -70,9 +63,7 @@ contract AccessControl is Ownable {
         view
         returns (uint256)
     {
-        console.log("before require");
         require(_adressToBeChecked != address(0), "null address given");
-        console.log("after require");
         //todo check if 0 address reverts 0 as well, require statement could then be removed
         return (s_mapAccessAllowedAddresses[_adressToBeChecked]);
     }

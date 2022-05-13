@@ -47,18 +47,13 @@ describe("AccessControl", function () {
   });
 
   it("AccessControl, add and update nr of allowed", async function () {
-    /*  accessControl.addAddressToAccessAllowed(accounts[1].address, 1);
-      expect(await accessControl.getNrOfAllowedElementsPerAddress(accounts[1].address)).to.be.equal(1);
-      //well nothing minted/used->remaining == allowed
-      expect(await accessControl.getRemainingNrOfElementsPerAddress(accounts[1].address)).to.be.equal(1);
-  */
+    accessControl.addAddressToAccessAllowed(accounts[1].address, 1);
+    expect(await accessControl.getNrOfAllowedElementsPerAddress(accounts[1].address)).to.be.equal(1);
+
 
     accessControl.addAddressToAccessAllowed(accounts[1].address, 3);
-    console.log("allowed elements of account1: ", await accessControl.getNrOfAllowedElementsPerAddress(accounts[1].address))
     expect(await accessControl.getNrOfAllowedElementsPerAddress(accounts[1].address)).to.be.equal(3);
-    await accessControl.getRemainingNrOfElementsPerAddress(accounts[1].address)
-    //well nothing minted/used->remaining == allowed
-    //expect(await accessControl.getRemainingNrOfElementsPerAddress(accounts[1].address)).to.be.equal(3);
+
   });
 
 
