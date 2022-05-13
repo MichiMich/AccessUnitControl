@@ -89,7 +89,11 @@ abstract contract AccessUnitControl is Ownable {
             handshakeContract.balanceOf(_adressToBeChecked));
     }
 
-    function removeAdressFromMapping(address _adressToBeRemoved) private {
+    function removeAdressFromMapping(address _adressToBeRemoved)
+        public
+        virtual
+        onlyOwner
+    {
         require(_adressToBeRemoved != address(0), "null address given");
         delete s_mapAccessAllowedAddresses[_adressToBeRemoved];
     }
