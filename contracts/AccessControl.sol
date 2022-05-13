@@ -4,34 +4,35 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "hardhat/console.sol";
 
 contract AccessControl is Ownable {
-    mapping(address => uint256) private mapAccessAllowedAddresses;
-    address[] private addedAddresses;
-    address nftContractAddress; //used for feedback of minted tokens
+    mapping(address => uint256) private s_mapAccessAllowedAddresses; //holds address and allowed nr of allowed elements to be minted by this address
+    address[] private s_addedAddresses; //holds all added addresses
+    address s_handshakeContract; //used for feedback of minted tokens
 
-    function linkNftContractAddress(address _nftContractAddress)
+    function linkHandshakeContract(address _handshakeContract)
         public
         onlyOwner
     {
-        nftContractAddress = _nftContractAddress;
+        require(_handshakeContract != address(0), "invalid address");
+        s_handshakeContract = _handshakeContract;
     }
 
     function addAddressToAccessAllowed(
         address _addressToBeAdded,
         uint256 _nrOfAllowedElements
     ) public onlyOwner {
-        require(_addressToBeAdded != address(0), "null address given");
+        require(_addressToBeAdded != address(0), "invalid address");
         require(_nrOfAllowedElements > 0, "nr of allowed elements <= 0");
         require(
-            mapAccessAllowedAddresses[_addressToBeAdded] !=
+            s_mapAccessAllowedAddresses[_addressToBeAdded] !=
                 _nrOfAllowedElements,
-            "given data already added"
+            "data already added"
         );
-        if (mapAccessAllowedAddresses[_addressToBeAdded] == 0) {
-            //was already added
-            addedAddresses.push(_addressToBeAdded);
+        if (s_mapAccessAllowedAddresses[_addressToBeAdded] == 0) {
+            //address not yet added
+            s_addedAddresses.push(_addressToBeAdded);
             console.log(_addressToBeAdded, "added to allowed ones");
         }
-        mapAccessAllowedAddresses[_addressToBeAdded] = _nrOfAllowedElements;
+        s_mapAccessAllowedAddresses[_addressToBeAdded] = _nrOfAllowedElements; //set nr of allowed elements to be minted by this address
     }
 
     function isAccessGranted(address _adressToBeChecked)
@@ -39,17 +40,26 @@ contract AccessControl is Ownable {
         view
         returns (bool)
     {
-        require(_adressToBeChecked != address(0), "null address given");
-        if (mapAccessAllowedAddresses[_adressToBeChecked] > 0) {
+        require(_adressToBeChecked != address(0), "invalid address");
+        if (s_mapAccessAllowedAddresses[_adressToBeChecked] > 0) {
             //so this address would be able to mint tokens, now we check if he already did
+            require(
+                s_handshakeContract != address(0),
+                "handshakeContract not set"
+            );
             //call other contract functions
-            nftContractImpl nftContract = nftContractImpl(nftContractAddress);
-            console.log("balanceOf", nftContract.balanceOf(_adressToBeChecked));
+            hadshakeContractImpl handshakeContract = hadshakeContractImpl(
+                s_handshakeContract
+            );
+            console.log(
+                "balanceOf",
+                handshakeContract.balanceOf(_adressToBeChecked)
+            );
             if (
-                nftContract.balanceOf(_adressToBeChecked) <
-                mapAccessAllowedAddresses[_adressToBeChecked]
+                handshakeContract.balanceOf(_adressToBeChecked) <
+                s_mapAccessAllowedAddresses[_adressToBeChecked]
             ) {
-                console.log(_adressToBeChecked, "allowed\n\n");
+                console.log(_adressToBeChecked, "allowed");
                 return (true);
             }
         }
@@ -60,29 +70,45 @@ contract AccessControl is Ownable {
         view
         returns (uint256)
     {
+        console.log("before require");
         require(_adressToBeChecked != address(0), "null address given");
-        // require(
-        //     mapAccessAllowedAddresses[_adressToBeChecked] > 0,
-        //     "address was never added"
-        // ); this reverts, we want to get the nur, so we will return 0
-        return (mapAccessAllowedAddresses[_adressToBeChecked]);
+        console.log("after require");
+        //todo check if 0 address reverts 0 as well, require statement could then be removed
+        return (s_mapAccessAllowedAddresses[_adressToBeChecked]);
+    }
+
+    function getRemainingNrOfElementsPerAddress(address _adressToBeChecked)
+        public
+        view
+        returns (uint256)
+    {
+        require(_adressToBeChecked != address(0), "null address given");
+        require(
+            s_handshakeContract != address(0),
+            "handshakecontract unlinked"
+        );
+        hadshakeContractImpl handshakeContract = hadshakeContractImpl(
+            s_handshakeContract
+        );
+        return (s_mapAccessAllowedAddresses[_adressToBeChecked] -
+            handshakeContract.balanceOf(_adressToBeChecked));
     }
 
     function removeAdressFromMapping(address _adressToBeRemoved) private {
         require(_adressToBeRemoved != address(0), "null address given");
-        delete mapAccessAllowedAddresses[_adressToBeRemoved];
+        delete s_mapAccessAllowedAddresses[_adressToBeRemoved];
     }
 
     function getCurrentNrOfElementsInMapping() public view returns (uint256) {
-        return (addedAddresses.length);
+        return (s_addedAddresses.length);
     }
 
     function removeAllFromAccessAllowed() public onlyOwner {
-        uint256 nrOfDeletesNeeded = addedAddresses.length;
+        uint256 nrOfDeletesNeeded = s_addedAddresses.length;
         for (uint256 i; i < nrOfDeletesNeeded; i++) {
-            removeAddressFromAccessAllowed(addedAddresses[0]); //refer always deleting first element, because wer reduce array after this call
+            removeAddressFromAccessAllowed(s_addedAddresses[0]); //refer always deleting first element, because wer reduce array after this call
         }
-        delete addedAddresses;
+        delete s_addedAddresses;
     }
 
     function removeAddressFromAccessAllowed(address _addressToRemove)
@@ -91,11 +117,11 @@ contract AccessControl is Ownable {
     {
         require(_addressToRemove != address(0), "null address given");
         require(
-            mapAccessAllowedAddresses[_addressToRemove] > 0,
-            "address not found added"
+            s_mapAccessAllowedAddresses[_addressToRemove] > 0,
+            "address not found"
         );
-        for (uint256 i; i < addedAddresses.length; i++) {
-            if (addedAddresses[i] == _addressToRemove) {
+        for (uint256 i; i < s_addedAddresses.length; i++) {
+            if (s_addedAddresses[i] == _addressToRemove) {
                 removeAdressFromMapping(_addressToRemove); //remove from mapping
                 removeAddressByIndex(i);
                 break;
@@ -104,26 +130,26 @@ contract AccessControl is Ownable {
     }
 
     function getArrayOfAddresses() public view returns (address[] memory) {
-        return addedAddresses;
+        return s_addedAddresses;
     }
 
     function removeAddressByIndex(uint256 _indexToRemove) private {
         require(
-            _indexToRemove <= addedAddresses.length ||
-                addedAddresses.length > 0,
+            _indexToRemove <= s_addedAddresses.length ||
+                s_addedAddresses.length > 0,
             "index out of range"
         );
-        if (_indexToRemove == addedAddresses.length - 1) {
-            addedAddresses.pop();
+        if (_indexToRemove == s_addedAddresses.length - 1) {
+            s_addedAddresses.pop();
         } else {
-            addedAddresses[_indexToRemove] = addedAddresses[
-                addedAddresses.length - 1
+            s_addedAddresses[_indexToRemove] = s_addedAddresses[
+                s_addedAddresses.length - 1
             ];
-            addedAddresses.pop();
+            s_addedAddresses.pop();
         }
     }
 }
 
-abstract contract nftContractImpl {
+abstract contract hadshakeContractImpl {
     function balanceOf(address owner) public view virtual returns (uint256);
 }

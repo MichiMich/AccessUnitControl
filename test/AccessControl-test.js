@@ -1,0 +1,73 @@
+const { expect } = require("chai");
+const { ethers } = require("hardhat");
+
+
+
+describe("AccessControl", function () {
+
+
+  let accessControl;
+
+  beforeEach(async function () {
+    //get available accounts from hardhat
+    accounts = await hre.ethers.getSigners();
+
+    //deploy contract
+    const AccessControl = await hre.ethers.getContractFactory("AccessControl");
+    accessControl = await AccessControl.deploy();
+    await accessControl.deployed();
+    console.log("AccessControl deployed at:", accessControl.address);
+  });
+
+
+  it("AccessControl, unlinked nft contract", async function () {
+    //add address, by owner
+    await accessControl.addAddressToAccessAllowed(accounts[1].address, 2);
+    //this should be reverted, because we did not link the nft contract -> see AccessControl.sol line 
+    await expect(accessControl.isAccessGranted(accounts[1].address)).to.be.reverted;
+  });
+
+  it("AccessControl, add addresses, check values", async function () {
+    await accessControl.addAddressToAccessAllowed(accounts[1].address, 1);
+    expect(await accessControl.getNrOfAllowedElementsPerAddress(accounts[1].address)).to.be.equal(1);
+
+    await accessControl.addAddressToAccessAllowed(accounts[2].address, 2);
+    expect(await accessControl.getNrOfAllowedElementsPerAddress(accounts[2].address)).to.be.equal(2);
+
+  });
+
+
+  it("AccessControl, double adding", async function () {
+    accessControl.addAddressToAccessAllowed(accounts[1].address, 1);
+    expect(await accessControl.getNrOfAllowedElementsPerAddress(accounts[1].address)).to.be.equal(1);
+
+    //double adding
+    await expect(accessControl.addAddressToAccessAllowed(accounts[1].address, 1)).to.be.reverted;
+
+  });
+
+  it("AccessControl, add and update nr of allowed", async function () {
+    /*  accessControl.addAddressToAccessAllowed(accounts[1].address, 1);
+      expect(await accessControl.getNrOfAllowedElementsPerAddress(accounts[1].address)).to.be.equal(1);
+      //well nothing minted/used->remaining == allowed
+      expect(await accessControl.getRemainingNrOfElementsPerAddress(accounts[1].address)).to.be.equal(1);
+  */
+
+    accessControl.addAddressToAccessAllowed(accounts[1].address, 3);
+    console.log("allowed elements of account1: ", await accessControl.getNrOfAllowedElementsPerAddress(accounts[1].address))
+    expect(await accessControl.getNrOfAllowedElementsPerAddress(accounts[1].address)).to.be.equal(3);
+    await accessControl.getRemainingNrOfElementsPerAddress(accounts[1].address)
+    //well nothing minted/used->remaining == allowed
+    //expect(await accessControl.getRemainingNrOfElementsPerAddress(accounts[1].address)).to.be.equal(3);
+  });
+
+
+
+
+
+
+
+
+
+
+});
