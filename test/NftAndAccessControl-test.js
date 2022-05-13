@@ -13,7 +13,7 @@ describe("AccessControl", function () {
         accounts = await hre.ethers.getSigners();
 
         //deploy contract
-        const AccessControl = await hre.ethers.getContractFactory("AccessControl");
+        const AccessControl = await hre.ethers.getContractFactory("AccessControlImplementation");
         accessControl = await AccessControl.deploy();
         await accessControl.deployed();
         console.log("AccessControl deployed at:", accessControl.address);

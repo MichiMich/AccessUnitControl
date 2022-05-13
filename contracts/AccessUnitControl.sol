@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-abstract contract AccessControlLib is Ownable {
+abstract contract AccessUnitControl is Ownable {
     mapping(address => uint256) private s_mapAccessAllowedAddresses; //holds address and allowed nr of allowed elements to be minted by this address
     address[] private s_addedAddresses; //holds all added addresses
     address s_handshakeContract; //used for feedback of minted tokens
