@@ -66,8 +66,6 @@ abstract contract AccessUnitControl is Ownable {
         virtual
         returns (uint256)
     {
-        require(_adressToBeChecked != address(0), "null address given");
-        //todo check if 0 address reverts 0 as well, require statement could then be removed
         return (s_mapAccessAllowedAddresses[_adressToBeChecked]);
     }
 
