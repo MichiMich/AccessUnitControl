@@ -7,7 +7,7 @@ const hre = require("hardhat");
 
 async function main() {
   //deploy contract
-  const AccessControl = await hre.ethers.getContractFactory("AccessControlImplementation");
+  const AccessControl = await hre.ethers.getContractFactory("AccessUnitControl");
   const accessControl = await AccessControl.deploy();
   await accessControl.deployed();
   console.log("AccessControl deployed at:", accessControl.address);
